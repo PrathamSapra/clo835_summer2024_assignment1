@@ -1,0 +1,34 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Log in to Amazon ECR
+      id: ecr-login
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build Docker image for application
+      run: |
+        docker build -t my-web-app ./path-to-web-app
+        docker tag my-web-app:latest ${{ steps.ecr-login.outputs.registry }}/my-web-app:latest
+
+    - name: Build Docker image for MySQL
+      run: |
+        docker build -t my-mysql ./path-to-mysql
+        docker tag my-mysql:latest ${{ steps.ecr-login.outputs.registry }}/my-mysql:latest
+
+    - name: Push Docker images to ECR
+      run: |
+        docker push ${{ steps.ecr-login.outputs.registry }}/my-web-app:latest
+        docker push ${{ steps.ecr-login.outputs.registry }}/my-mysql:latest
