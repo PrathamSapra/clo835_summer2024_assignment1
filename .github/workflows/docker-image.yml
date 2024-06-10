@@ -30,11 +30,11 @@ jobs:
         IMAGE_TAG: v0.1
       run: |
         # Docker build using the standard Dockerfile
-        docker build -t $ECR_REGISTRY/my-app-repo:webapp-$IMAGE_TAG -f Dockerfile .
+        docker build -t $ECR_REGISTRY/my-web-app:webapp-$IMAGE_TAG -f Dockerfile .
         # Docker push for the standard Dockerfile image
-        docker push $ECR_REGISTRY/my-app-repo:webapp-$IMAGE_TAG
+        docker push $ECR_REGISTRY/my-web-app:webapp-$IMAGE_TAG
         
         # Docker build using Dockerfile_mysql
-        docker build -t $ECR_REGISTRY/my-mysql-repo:mysql-$IMAGE_TAG -f Dockerfile_mysql .
+        docker build -t $ECR_REGISTRY/my-mysql:mysql-$IMAGE_TAG -f Dockerfile_mysql .
         # Docker push for the Dockerfile_mysql image
-        docker push $ECR_REGISTRY/my-mysql-repo:mysql-$IMAGE_TAG
+        docker push $ECR_REGISTRY/my-mysql:mysql-$IMAGE_TAG
