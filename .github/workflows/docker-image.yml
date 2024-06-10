@@ -1,44 +1,40 @@
-name: Build and Push Docker Images to ECR
+name: Build and Push Docker Images
 
 on:
   push:
     branches:
-      - master
-  pull_request:
-    branches:
+      - main
       - master
 
 jobs:
-  build-and-push:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      
-      - name: Configure AWS CLI
-        run: |
-          aws configure set default.aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws configure set default.aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws configure set default.aws_session_token ${{ secrets.AWS_SESSION_TOKEN }}
-          aws configure set default.region ${{ secrets.AWS_REGION }}
-          
-      - name: login to ecr command
-        run: aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 947731789124.dkr.ecr.us-east-1.amazonaws.com
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: build app
-        run: docker build -t clo835assignment1 .
+    - name: Log in to Amazon ECR
+      id: ecr-login
+      uses: aws-actions/amazon-ecr-login@v1
+      with:
+        registry: ${{ secrets.AWS_REGISTRY_URL }}
+        region: us-east-1 # or your preferred region
+        aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws_session_token: ${{ secrets.AWS_SESSION_TOKEN }}
 
-      - name: build mysql image
-        run: docker build -t my_db -f Dockerfile_mysql .
+    - name: Build Docker image for application
+      run: |
+        docker build -t my-web-app ./Dockerfile
+        docker tag my-web-app:latest ${{ steps.ecr-login.outputs.registry }}/my-web-app:latest
 
-      - name: tag app image
-        run: docker tag clo835assignment1:latest 947731789124.dkr.ecr.us-east-1.amazonaws.com/my-web-app
-      - name: tag mysql image
-        run: docker tag my_db:latest 947731789124.dkr.ecr.us-east-1.amazonaws.com/my-mysql
+    - name: Build Docker image for MySQL
+      run: |
+        docker build -t my-mysql ./Dockerfile_mysql
+        docker tag my-mysql:latest ${{ steps.ecr-login.outputs.registry }}/my-mysql:latest
 
-      - name: push app image
-        run: docker push 947731789124.dkr.ecr.us-east-1.amazonaws.com/my-web-app
-
-      - name: push mysql image
-        run: docker push 947731789124.dkr.ecr.us-east-1.amazonaws.com/my-mysql
+    - name: Push Docker images to ECR
+      run: |
+        docker push ${{ steps.ecr-login.outputs.registry }}/my-web-app:latest
+        docker push ${{ steps.ecr-login.outputs.registry }}/my-mysql:latest
